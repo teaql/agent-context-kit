@@ -1,0 +1,40 @@
+{
+  "name": "@teaql/agent-context-kit",
+  "version": "0.1.0",
+  "description": "Deterministic Markdown context-lifecycle protocol for coding agents",
+  "type": "module",
+  "engines": {
+    "node": ">=22.19.0"
+  },
+  "exports": {
+    ".": "./src/index.ts",
+    "./pi": "./src/adapters/pi.ts"
+  },
+  "pi": {
+    "extensions": [
+      "./src/adapters/pi.ts"
+    ]
+  },
+  "files": [
+    "src",
+    "docs",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "test": "node --test --experimental-strip-types test/*.test.ts",
+    "typecheck": "tsc --noEmit",
+    "check": "npm run typecheck && npm test"
+  },
+  "keywords": [
+    "coding-agent",
+    "context",
+    "pi",
+    "lifecycle"
+  ],
+  "license": "Apache-2.0",
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "typescript": "^5.9.0"
+  }
+}
