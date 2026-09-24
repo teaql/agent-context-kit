@@ -28,9 +28,73 @@ The first implementation includes:
 - a strict parser with diagnostics;
 - session block state and audit events;
 - consume-once ephemeral message handling;
-- a Pi extension adapter; and
+- a Pi extension adapter;
 - protocol and adapter conformance tests;
-- a real Pi runtime integration test with a provider-boundary context trace.
+- and a real Pi runtime integration test with a provider-boundary context trace.
+
+## Install in Pi
+
+Pi 0.85 or later and Node.js 22.19 or later are required. Install the package
+for your user account directly from GitHub:
+
+```bash
+pi install git:github.com/teaql/agent-context-kit
+```
+
+The package manifest automatically loads `src/adapters/pi.ts`; no manual
+`--extension` flag is needed on later runs. Confirm that Pi registered the
+package, then start Pi normally:
+
+```bash
+pi list
+pi
+```
+
+To install it only for the current project, run this from the project root:
+
+```bash
+pi install git:github.com/teaql/agent-context-kit -l
+```
+
+This writes the package source to `.pi/settings.json`. Pi will ask you to trust
+the project before it loads project-local extensions. Teammates who share that
+settings file get the missing package on startup after granting project trust.
+
+To try the extension for one Pi run without changing settings:
+
+```bash
+pi -e git:github.com/teaql/agent-context-kit
+```
+
+For local development, point Pi at a checkout instead:
+
+```bash
+pi install /absolute/path/to/agent-context-kit
+```
+
+After installation, put a strict block declaration in a trusted Pi context
+file such as `AGENTS.md`:
+
+```markdown
+<!--BLOCK_ID:phase_modeling-->
+Keep these modeling rules active across model requests.
+<!--/BLOCK_ID:phase_modeling-->
+```
+
+Discard it explicitly from Pi when the phase is complete:
+
+```text
+/context-discard phase_modeling
+```
+
+Remove the user-level GitHub installation with:
+
+```bash
+pi remove git:github.com/teaql/agent-context-kit
+```
+
+Pi packages execute with the current user's permissions. Review an extension's
+source before installing it.
 
 ## Development
 
