@@ -226,7 +226,6 @@ export class PiLifecycleAdapter {
 					original,
 					"pi_context_file_loaded",
 				);
-				contextFile.content = ordinary;
 				if (original !== ordinary && original.length > 0) {
 					systemPrompt = systemPrompt.replaceAll(original, ordinary);
 				}

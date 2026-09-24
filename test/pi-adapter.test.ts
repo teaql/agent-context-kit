@@ -52,7 +52,7 @@ test("Pi loads context blocks, strips the source copy, and injects active state"
 		systemPromptOptions: { contextFiles: [contextFile], skills: [] },
 	});
 
-	assert.equal(contextFile.content, "ordinary\n");
+	assert.equal(contextFile.content, original);
 	assert.match(original, /model first/);
 	assert.doesNotMatch(startResult.systemPrompt, /model first/);
 

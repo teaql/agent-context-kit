@@ -29,7 +29,8 @@ The first implementation includes:
 - session block state and audit events;
 - consume-once ephemeral message handling;
 - a Pi extension adapter; and
-- protocol and adapter conformance tests.
+- protocol and adapter conformance tests;
+- a real Pi runtime integration test with a provider-boundary context trace.
 
 ## Development
 
@@ -40,6 +41,34 @@ npm install
 npm test
 npm run typecheck
 ```
+
+### Real Pi runtime trace
+
+Run a complete Pi session and record the exact context presented at the model
+provider boundary:
+
+```bash
+npm run trace:pi
+```
+
+The command uses Pi's real `AgentSession`, extension runner, request transform,
+and tool loop. It substitutes Pi's deterministic local faux provider for a
+network model, so the trace is repeatable and requires no API key. The JSONL
+record is written to `.artifacts/pi-context-trace.jsonl` and contains every
+provider request plus a final persistent-transcript check.
+
+The fixture produces these transitions:
+
+| Provider request | `phase_modeling` | Ephemeral tool output |
+| --- | --- | --- |
+| 1 | active and visible | absent |
+| 2 | active and visible | original content |
+| 3 | active and visible | tombstone |
+| 4, after trusted discard | absent | tombstone |
+
+The final trace record also proves that the persistent Pi transcript still
+contains the original ephemeral output and does not contain the request-local
+tombstone. `npm test` runs this integration test after the unit suite.
 
 Load the Pi extension directly while developing:
 

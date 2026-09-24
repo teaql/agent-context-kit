@@ -22,7 +22,10 @@
     "LICENSE"
   ],
   "scripts": {
-    "test": "node --test --experimental-strip-types test/*.test.ts",
+    "test": "npm run test:unit && npm run test:integration",
+    "test:unit": "node --test --experimental-strip-types test/*.test.ts",
+    "test:integration": "node --test --experimental-strip-types test/integration/*.test.ts",
+    "trace:pi": "node --experimental-strip-types scripts/pi-runtime-trace.ts",
     "typecheck": "tsc --noEmit",
     "check": "npm run typecheck && npm test"
   },
@@ -34,6 +37,8 @@
   ],
   "license": "Apache-2.0",
   "devDependencies": {
+    "@earendil-works/pi-ai": "0.85.1",
+    "@earendil-works/pi-coding-agent": "0.85.1",
     "@types/node": "^24.0.0",
     "typescript": "^5.9.0"
   }

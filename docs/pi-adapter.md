@@ -46,3 +46,24 @@ adapter.acceptTrustedControl(
 The adapter appends audit and state snapshot entries as Pi custom entries.
 Custom entries do not enter model context, but allow lifecycle state to be
 restored when a Pi session is resumed.
+
+## Runtime integration trace
+
+`npm run trace:pi` runs the adapter inside Pi's real `AgentSession`, including
+the extension runner, context event, tool execution loop, and provider call.
+The provider itself is Pi's deterministic local faux provider so the test has
+no credentials, network dependency, or nondeterministic model output.
+
+Each `provider_request` JSONL record captures:
+
+- the lifecycle request sequence and active block IDs;
+- whether the block is actually visible at the provider boundary;
+- whether the original context-file copy leaked into the system prompt;
+- whether ephemeral content is absent, original, or tombstoned;
+- the complete provider-visible message list; and
+- lifecycle audit events observed so far.
+
+The last `persistent_transcript` record independently checks that the original
+ephemeral tool result remains stored and the tombstone was never persisted.
+The generated trace lives at `.artifacts/pi-context-trace.jsonl`; it is ignored
+by Git because it is a local test artifact.
