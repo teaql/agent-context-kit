@@ -20,6 +20,20 @@ V1 deliberately does not summarize, compress, rank, retrieve, or infer when a
 phase is complete. It builds a request-local context view and leaves the host's
 transcript and Markdown sources unchanged.
 
+<table>
+  <tr>
+    <td align="center"><a href="#codex"><img src="assets/coding-agents/codex.svg" width="56" height="56" alt="Codex"><br>Codex</a></td>
+    <td align="center"><a href="#claude-code"><img src="assets/coding-agents/claude-code.svg" width="56" height="56" alt="Claude Code"><br>Claude Code</a></td>
+    <td align="center"><a href="#cursor"><img src="assets/coding-agents/cursor.svg" width="56" height="56" alt="Cursor"><br>Cursor</a></td>
+    <td align="center"><a href="#gemini-cli"><img src="assets/coding-agents/gemini-cli.svg" width="56" height="56" alt="Gemini CLI"><br>Gemini CLI</a></td>
+  </tr>
+</table>
+
+The coding-agent tiles match the companion
+[TeaQL Agent Kit](https://github.com/teaql/teaql-agent-kit). Pi and DeepSeek
+Harness are also supported below; the icon set is intentionally limited to
+the verified, licensed assets already used by that project.
+
 ## Status
 
 The implementation includes:
@@ -37,7 +51,24 @@ The implementation includes:
 - protocol and adapter conformance tests;
 - and a real Pi runtime integration test with a provider-boundary context trace.
 
-## Install in Pi
+## Installation
+
+The installable package does not imply identical runtime capabilities:
+
+| Agent | Install result | Lifecycle level |
+| --- | --- | --- |
+| Pi | Extension | Full V1 runtime adapter |
+| Gemini CLI | Extension | Runtime adapter for stable text messages |
+| DeepSeek Harness | Cordis plugin | Runtime adapter with durable ephemeral projections |
+| Codex | Agent Plugin | Protocol skill only |
+| Claude Code | Plugin | Protocol skill only |
+| Cursor | Cursor Plugin | Protocol skill only |
+| Antigravity, WorkBuddy | None | Skipped: no documented request-history rewrite API |
+
+See the [compatibility matrix](docs/compatibility.md) before relying on
+consume-once behavior outside Pi, Gemini CLI, or DeepSeek Harness.
+
+### Pi
 
 Pi 0.85 or later and Node.js 22.19 or later are required. Install the package
 for your user account directly from GitHub:
@@ -100,6 +131,87 @@ pi remove git:github.com/teaql/agent-context-kit
 
 Pi packages execute with the current user's permissions. Review an extension's
 source before installing it.
+
+### Gemini CLI
+
+Install directly from GitHub, then restart Gemini CLI:
+
+```bash
+gemini extensions install https://github.com/teaql/agent-context-kit
+```
+
+Confirm it is enabled with `/extensions list`. The bundled `BeforeModel` hook
+handles the stable text-message view; Gemini CLI does not expose non-text tool
+payloads to this hook. See the [Gemini CLI adapter guide](docs/gemini-cli-adapter.md).
+
+### DeepSeek Harness
+
+Clone the repository and register its function plugin in a Harness overlay:
+
+```bash
+git clone https://github.com/teaql/agent-context-kit.git
+```
+
+```yaml
+- insert:
+    - id: agent-context-kit
+      name: '/absolute/path/to/agent-context-kit/src/adapters/deepseek-harness.ts'
+```
+
+Start Harness with that overlay using the command appropriate to your Harness
+checkout or deployment. Put trusted declarations in `.agent-context-kit.md`
+at the session working directory. See the
+[DeepSeek Harness adapter guide](docs/deepseek-harness-adapter.md).
+
+### Codex
+
+Add this repository as a marketplace, then open the plugin browser:
+
+```bash
+codex plugin marketplace add teaql/agent-context-kit
+codex
+```
+
+Run `/plugins`, select the **TeaQL** source, and install
+`agent-context-kit`. Start a new task after installation. This installs the
+protocol-authoring skill; current Codex hooks cannot enforce request-local
+history replacement.
+
+### Claude Code
+
+Add the repository marketplace and install the plugin:
+
+```bash
+claude plugin marketplace add teaql/agent-context-kit
+claude plugin install agent-context-kit@teaql
+```
+
+Start a new Claude Code session. For local development without installing a
+marketplace, use `claude --plugin-dir /absolute/path/to/agent-context-kit`.
+This plugin supplies the protocol skill only; it does not claim full V1 runtime
+enforcement.
+
+### Cursor
+
+Cursor's documented local-plugin directory is the most direct installation
+path until this repository is published in a Cursor marketplace:
+
+```bash
+mkdir -p ~/.cursor/plugins/local
+git clone https://github.com/teaql/agent-context-kit.git ~/.cursor/plugins/local/agent-context-kit
+```
+
+Restart Cursor or run **Developer: Reload Window**, then open **Customize** and
+confirm `agent-context-kit` is present. Local plugin imports can be disabled by
+organization policy. This installs the protocol skill, not a full lifecycle
+runtime adapter.
+
+### Antigravity and WorkBuddy
+
+No installation is published for these hosts. Their public documentation
+covers skills, rules, experts, or connectors, but not a deterministic hook that
+can replace arbitrary prior messages before every model request. They remain
+explicitly skipped rather than receiving a misleading partial adapter.
 
 ## Development
 

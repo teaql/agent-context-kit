@@ -20,6 +20,8 @@
   "files": [
     "src",
     "docs",
+    "assets",
+    ".agents",
     ".codex-plugin",
     ".claude-plugin",
     ".cursor-plugin",
