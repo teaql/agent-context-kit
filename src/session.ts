@@ -227,12 +227,21 @@ export class LifecycleSession {
 			requestSequence: this.requestSequenceValue,
 			blocks: [...this.blocks.values()].map(cloneBlock),
 			audit: this.audit.map((event) => ({ ...event, ...(event.details ? { details: { ...event.details } } : {}) })),
+			loadedSourceDocuments: [...this.loadedSourceDocuments],
+			processedControls: [...this.processedControls],
+			consumedEphemeral: [...this.consumedEphemeral],
 		};
 	}
 
 	restore(snapshot: LifecycleSnapshot): void {
 		this.blocks.clear();
 		for (const block of snapshot.blocks) this.blocks.set(block.id, cloneBlock(block));
+		this.loadedSourceDocuments.clear();
+		for (const key of snapshot.loadedSourceDocuments ?? []) this.loadedSourceDocuments.add(key);
+		this.processedControls.clear();
+		for (const key of snapshot.processedControls ?? []) this.processedControls.add(key);
+		this.consumedEphemeral.clear();
+		for (const key of snapshot.consumedEphemeral ?? []) this.consumedEphemeral.add(key);
 		this.requestSequenceValue = snapshot.requestSequence;
 		this.audit.splice(0, this.audit.length, ...snapshot.audit.map((event) => ({ ...event })));
 	}

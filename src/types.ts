@@ -77,6 +77,10 @@ export interface LifecycleSnapshot {
 	requestSequence: number;
 	blocks: LifecycleBlock[];
 	audit: AuditEvent[];
+	/** Adapter bookkeeping needed when a hook process is recreated per request. */
+	loadedSourceDocuments?: string[];
+	processedControls?: string[];
+	consumedEphemeral?: string[];
 }
 
 export interface ControlSource {

@@ -22,13 +22,18 @@ transcript and Markdown sources unchanged.
 
 ## Status
 
-The first implementation includes:
+The implementation includes:
 
 - the [V1 protocol specification](docs/protocol-v1.md);
 - a strict parser with diagnostics;
 - session block state and audit events;
 - consume-once ephemeral message handling;
 - a Pi extension adapter;
+- a Gemini CLI extension adapter for the stable text-message hook API;
+- a DeepSeek Harness function plugin with durable ephemeral projections;
+- installable Codex, Claude Code, and Cursor protocol-guidance plugins;
+- an evidence-based compatibility matrix for Claude Code, Cursor,
+  Antigravity, and WorkBuddy;
 - protocol and adapter conformance tests;
 - and a real Pi runtime integration test with a provider-boundary context trace.
 
@@ -148,3 +153,14 @@ assistant, and tool-result messages cannot discard blocks by default.
 
 See [the Pi adapter guide](docs/pi-adapter.md) for the trust policy and public
 integration API.
+
+## Other agents
+
+- [Gemini CLI adapter](docs/gemini-cli-adapter.md)
+- [DeepSeek Harness adapter](docs/deepseek-harness-adapter.md)
+- [Capability and skip matrix](docs/compatibility.md)
+
+The repository root also carries Codex, Claude Code, and Cursor plugin
+manifests. Their shared `context-lifecycle` skill helps author and review the
+protocol, but does not claim runtime lifecycle enforcement: none of those
+hosts currently documents an arbitrary pre-model history replacement seam.
