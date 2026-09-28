@@ -34,6 +34,22 @@ The coding-agent tiles match the companion
 Harness are also supported below; the icon set is intentionally limited to
 the verified, licensed assets already used by that project.
 
+## Supported agents
+
+Support is split by what each host can enforce at the model-request boundary:
+
+| Support tier | Agents | What is supported |
+| --- | --- | --- |
+| Full V1 runtime | **Pi** | Persistent blocks, trusted discard, and consume-once ephemeral messages |
+| Runtime with host limits | **Gemini CLI**, **DeepSeek Harness** | Gemini CLI supports stable text messages; DeepSeek Harness uses durable projections and requires its trusted source on resume |
+| Installable protocol plugin | **Codex**, **Claude Code**, **Cursor** | Protocol authoring and integration guidance; full runtime enforcement is not claimed |
+| Evaluated, not currently supported | Antigravity, WorkBuddy | No documented request-history rewrite API, so no package is published |
+
+In short, runtime adapters are available for **Pi**, **Gemini CLI**, and
+**DeepSeek Harness**. Installable guidance plugins are available for
+**Codex**, **Claude Code**, and **Cursor**. See the
+[compatibility matrix](docs/compatibility.md) for the exact host constraints.
+
 ## Status
 
 The implementation includes:
@@ -53,20 +69,9 @@ The implementation includes:
 
 ## Installation
 
-The installable package does not imply identical runtime capabilities:
-
-| Agent | Install result | Lifecycle level |
-| --- | --- | --- |
-| Pi | Extension | Full V1 runtime adapter |
-| Gemini CLI | Extension | Runtime adapter for stable text messages |
-| DeepSeek Harness | Cordis plugin | Runtime adapter with durable ephemeral projections |
-| Codex | Agent Plugin | Protocol skill only |
-| Claude Code | Plugin | Protocol skill only |
-| Cursor | Cursor Plugin | Protocol skill only |
-| Antigravity, WorkBuddy | None | Skipped: no documented request-history rewrite API |
-
-See the [compatibility matrix](docs/compatibility.md) before relying on
-consume-once behavior outside Pi, Gemini CLI, or DeepSeek Harness.
+The installable package does not imply identical runtime capabilities. Check
+the support tiers above before relying on consume-once behavior outside Pi,
+Gemini CLI, or DeepSeek Harness.
 
 ### Pi
 
