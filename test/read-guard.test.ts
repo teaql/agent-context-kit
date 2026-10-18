@@ -153,6 +153,21 @@ test("recognizes common OpenCode and MiMo tool argument aliases", () => {
 			input: { cmd: "cat generated/library/model.json" },
 			cwd: root,
 		}));
+		assert.ok(guard.evaluate({
+			toolName: "terminal",
+			input: { command: "cat generated/library/model.json" },
+			cwd: root,
+		}));
+		assert.ok(guard.evaluate({
+			toolName: "read_files",
+			input: { paths: ["src/index.ts", "generated/library/model.json"] },
+			cwd: root,
+		}));
+		assert.ok(guard.evaluate({
+			toolName: "run_shell_command",
+			input: { command: "cat generated/library/model.json" },
+			cwd: root,
+		}));
 	} finally {
 		rmSync(root, { recursive: true, force: true });
 	}

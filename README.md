@@ -30,16 +30,29 @@ transcript and Markdown sources unchanged.
   <tr>
     <td align="center"><a href="#pi"><img src="assets/coding-agents/pi.svg" width="56" height="56" alt="Pi"><br>Pi</a></td>
     <td align="center"><a href="#opencode"><img src="assets/coding-agents/opencode.svg" width="56" height="56" alt="OpenCode"><br>OpenCode</a></td>
+    <td align="center"><a href="#kilo-code"><img src="assets/coding-agents/kilo-code.svg" width="56" height="56" alt="Kilo Code"><br>Kilo Code</a></td>
+    <td align="center"><a href="#cline"><img src="assets/coding-agents/cline.svg" width="56" height="56" alt="Cline"><br>Cline</a></td>
+  </tr>
+  <tr>
     <td align="center"><a href="#mimo-code"><img src="assets/coding-agents/mimocode.svg" width="56" height="56" alt="MiMo Code"><br>MiMo Code</a></td>
     <td align="center"><a href="#deepseek-harness"><img src="assets/coding-agents/deepseek-harness.svg" width="56" height="56" alt="DeepSeek Harness"><br>DeepSeek Harness</a></td>
+    <td align="center"><a href="#hermes-agent"><img src="assets/coding-agents/hermes-agent.svg" width="56" height="56" alt="Hermes Agent"><br>Hermes Agent</a></td>
+    <td align="center"><a href="#kimi-code"><img src="assets/coding-agents/kimi-code.svg" width="56" height="56" alt="Kimi Code"><br>Kimi Code</a></td>
+  </tr>
+  <tr>
+    <td align="center"><a href="#qwen-code"><img src="assets/coding-agents/qwen-code.svg" width="56" height="56" alt="Qwen Code"><br>Qwen Code</a></td>
+    <td align="center"><a href="#github-copilot-cli"><img src="assets/coding-agents/github-copilot.svg" width="56" height="56" alt="GitHub Copilot CLI"><br>Copilot CLI</a></td>
+    <td align="center"><a href="#kiro-cli"><img src="assets/coding-agents/kiro-cli.svg" width="56" height="56" alt="Kiro CLI"><br>Kiro CLI</a></td>
+    <td align="center"><a href="#crush"><img src="assets/coding-agents/crush.svg" width="56" height="56" alt="Crush"><br>Crush</a></td>
   </tr>
 </table>
 
 The coding-agent tiles match the companion
-[TeaQL Agent Kit](https://github.com/teaql/teaql-agent-kit). OpenCode, MiMo
-Code, and DeepSeek use the same licensed Lobe Icons source and tile treatment;
-Pi uses the mascot geometry and color documented by its MIT-licensed project.
-Every agent listed as supported below now has a tile.
+[TeaQL Agent Kit](https://github.com/teaql/teaql-agent-kit). Most marks use the
+same licensed Lobe Icons source and tile treatment. Pi and Kilo use assets from
+their MIT-licensed projects; Crush uses its documented heart/Charple identity
+because the project does not publish a vector application icon. Every supported
+agent below has a tile.
 
 ## Supported agents
 
@@ -47,15 +60,25 @@ Support is split by what each host can enforce at the model-request boundary:
 
 | Support tier | Agents | What is supported |
 | --- | --- | --- |
-| Full V1 runtime | **Pi**, **OpenCode** | Persistent blocks, trusted discard, consume-once ephemeral messages, and protected-read feedback |
-| Runtime with host limits | **Gemini CLI**, **DeepSeek Harness**, **MiMo Code** | Gemini CLI is text-only; DeepSeek Harness uses durable projections; MiMo Code relies on officially typed but experimental message-transform hooks |
+| Full V1 runtime | **Pi**, **OpenCode**, **Cline**, **Kilo Code** | Persistent blocks, trusted discard, consume-once ephemeral messages, and protected-read feedback; Kilo's full-history hook is experimental |
+| Runtime with host limits | **Gemini CLI**, **DeepSeek Harness**, **MiMo Code**, **Hermes Agent**, **Kimi Code**, **Qwen Code**, **Kiro CLI** | Request-local context and read guards are adapted to each documented host boundary; hosts without arbitrary history replacement do not claim consume-once behavior |
+| Protected-read integration | **GitHub Copilot CLI**, **Crush** | Deterministic protected-read blocking and TeaQL redirect feedback; no full context lifecycle claim |
 | Installable protocol plugin | **Codex**, **Claude Code**, **Cursor** | Protocol authoring and integration guidance; full runtime enforcement is not claimed |
-| Evaluated, not currently supported | Antigravity, WorkBuddy | No documented request-history rewrite API, so no package is published |
+| Evaluated, not currently supported | **Antigravity**, **WorkBuddy**, **Aider**, **Continue**, **Roo Code** | Their public documentation does not expose the request-history and/or pre-tool interception API required for a truthful adapter |
 
-In short, runtime adapters are available for **Pi**, **OpenCode**, **MiMo
-Code**, **Gemini CLI**, and **DeepSeek Harness**. Installable guidance plugins
-are available for **Codex**, **Claude Code**, and **Cursor**. See the
+In short, every host is labeled by enforceable behavior rather than by whether
+it merely has an installable package. See the
 [compatibility matrix](docs/compatibility.md) for the exact host constraints.
+
+### Subagents
+
+Kimi Code, Qwen Code, and Kiro CLI have explicit `SubagentStart` hooks in the
+bundled integrations, so a delegated agent receives the active TeaQL block
+context at startup. Full-runtime package adapters participate in child agents
+when the host loads the plugin for that child session. Crush is the documented
+exception: its current `PreToolUse` hook runs only for the top-level agent, so
+protected paths must also be enforced with OpenShell or another OS sandbox
+when Crush delegates work.
 
 ## Status
 
@@ -69,12 +92,16 @@ The implementation includes:
   generated-library reads to TeaQL workspace context;
 - a Pi extension adapter;
 - an OpenCode V1/V2 package plugin with request-local context and read guards;
+- Kilo Code and Cline full-history adapters with protected-read hooks;
 - a MiMo Code file plugin with request-local context and cancellable read guards;
+- a native Hermes Agent plugin with request-local block injection, trusted
+  session discard, and protected-read hooks;
 - a Gemini CLI extension adapter for the stable text-message hook API;
 - a DeepSeek Harness function plugin with durable ephemeral projections;
+- installable Kimi Code and Qwen Code command-hook extensions;
+- project hook templates for GitHub Copilot CLI, Kiro CLI, and Crush;
 - installable Codex, Claude Code, and Cursor protocol-guidance plugins;
-- an evidence-based compatibility matrix for Claude Code, Cursor,
-  Antigravity, and WorkBuddy;
+- an evidence-based compatibility and temporary non-support matrix;
 - protocol and adapter conformance tests;
 - and a real Pi runtime integration test with a provider-boundary context trace.
 
@@ -216,6 +243,41 @@ protected-read redirect. OpenCode V2 is preferred; the package includes the
 officially documented V1 compatibility entry point for OpenCode 1.18.29 or
 later. See the [OpenCode adapter guide](docs/opencode-adapter.md).
 
+### Kilo Code
+
+Clone the repository, then add its server entry to the project's `kilo.json`:
+
+```bash
+git clone https://github.com/teaql/agent-context-kit.git .agent-context-kit-plugin
+```
+
+```json
+{
+  "plugin": [
+    "file:///absolute/path/to/.agent-context-kit-plugin/src/adapters/kilo.ts"
+  ]
+}
+```
+
+When the package is available from npm, `kilo plugin
+@teaql/agent-context-kit` installs the same `./server` export. Kilo uses the
+OpenCode-compatible request and tool hooks; its full-history transform remains
+an experimental host API. See the [Kilo Code adapter guide](docs/kilo-adapter.md).
+
+### Cline
+
+Install the Git repository as a Cline plugin:
+
+```bash
+cline plugin install --git github.com/teaql/agent-context-kit
+```
+
+Add `--cwd .` for a project-scoped installation and verify it with
+`cline config`. The adapter registers a provider-message builder and a
+`beforeTool` guard. The documented install path currently covers Cline SDK,
+CLI, and Kanban, not the VS Code or JetBrains extensions. See the
+[Cline adapter guide](docs/cline-adapter.md).
+
 ### MiMo Code
 
 MiMo Code 0.1.15 or later is required. Install this package under MiMo Code's
@@ -234,6 +296,100 @@ though an older public plugin page still names the upstream OpenCode path. The
 adapter is therefore source-verified and marked experimental until MiMo's
 public plugin documentation catches up. See the
 [MiMo Code adapter guide](docs/mimocode-adapter.md).
+
+### Hermes Agent
+
+Hermes has a documented native plugin system with request and tool hooks.
+Install this repository directly and enable it:
+
+```bash
+hermes plugins install teaql/agent-context-kit --enable
+```
+
+Start a new Hermes session in the target workspace. Put trusted lifecycle
+declarations in `.agent-context-kit.md` and the optional read policy in
+`.agent-context-kit.json`. The plugin injects active blocks through
+`pre_llm_call`, blocks protected `read_file`, `search_files`, and `terminal`
+calls through `pre_tool_call`, and exposes trusted session discard as:
+
+```text
+/context-discard phase_modeling
+```
+
+Hermes keeps plugin-injected context request-local, but its documented hook
+does not replace arbitrary earlier messages. Consume-once ephemeral transcript
+rewriting is therefore not claimed. See the
+[Hermes Agent adapter guide](docs/hermes-adapter.md).
+
+### Kimi Code
+
+Install the repository from Kimi Code and reload plugins:
+
+```text
+/plugins install https://github.com/teaql/agent-context-kit
+/plugins reload
+```
+
+The native manifest contributes prompt, subagent, and pre-tool hooks. It
+injects active blocks into the current request and blocks protected reads, but
+does not rewrite arbitrary earlier history. See the
+[command-hook adapter guide](docs/command-hook-adapters.md#kimi-code).
+
+### Qwen Code
+
+Install globally or for the current project, then restart or run
+`/reload-plugins`:
+
+```bash
+qwen extensions install teaql/agent-context-kit
+qwen extensions install teaql/agent-context-kit --scope project
+```
+
+The native extension supplies prompt, subagent, and pre-tool hooks. It does not
+claim arbitrary history replacement. See the
+[command-hook adapter guide](docs/command-hook-adapters.md#qwen-code).
+
+### GitHub Copilot CLI
+
+Install the package and copy the repository hook definition:
+
+```bash
+npm install --save-dev github:teaql/agent-context-kit
+mkdir -p .github/hooks
+cp node_modules/@teaql/agent-context-kit/integrations/copilot/agent-context-kit.json .github/hooks/
+```
+
+This integration is intentionally read-guard only. See the
+[command-hook adapter guide](docs/command-hook-adapters.md#github-copilot-cli).
+
+### Kiro CLI
+
+Install the package and copy the standalone V3 hook definition:
+
+```bash
+npm install --save-dev github:teaql/agent-context-kit
+mkdir -p .kiro/hooks
+cp node_modules/@teaql/agent-context-kit/integrations/kiro/agent-context-kit.json .kiro/hooks/
+```
+
+Kiro receives active block context on prompt submission and blocks protected
+reads before tool execution. See the
+[command-hook adapter guide](docs/command-hook-adapters.md#kiro-cli).
+
+### Crush
+
+Install the package, then merge the `hooks` object from the bundled snippet
+into the project's `crush.json`:
+
+```bash
+npm install --save-dev github:teaql/agent-context-kit
+```
+
+The snippet is located at
+`node_modules/@teaql/agent-context-kit/integrations/crush/hooks.json`. Crush
+currently applies only `PreToolUse` to the top-level agent, so this integration
+is read-guard only. See the
+[command-hook adapter guide](docs/command-hook-adapters.md#crush).
 
 ### Codex
 
@@ -278,12 +434,26 @@ confirm `agent-context-kit` is present. Local plugin imports can be disabled by
 organization policy. This installs the protocol skill, not a full lifecycle
 runtime adapter.
 
-### Antigravity and WorkBuddy
+### Temporarily unsupported agents
 
-No installation is published for these hosts. Their public documentation
-covers skills, rules, experts, or connectors, but not a deterministic hook that
-can replace arbitrary prior messages before every model request. They remain
-explicitly skipped rather than receiving a misleading partial adapter.
+No installation is published for the agents below because their current
+public documentation does not describe a suitable API for enforcing this
+project's lifecycle or protected-read contract:
+
+- **Antigravity** documents skills, rules, and workflows, but not a request
+  transform or deterministic pre-tool veto.
+- **WorkBuddy** documents skills, experts, connectors, and Buddy Apps, but not
+  a request-history or pre-tool interception API.
+- **Aider** can load conventions as read-only context, but does not document a
+  plugin hook for outgoing history transforms or tool-call vetoes.
+- **Continue** documents context providers and MCP; it does not document the
+  necessary model-request and pre-tool interception boundary.
+- **Roo Code** documents rules and MCP usage, but not a stable plugin lifecycle
+  hook that can implement the protocol.
+
+This is temporary and evidence-based. A host moves into a supported tier when
+its official API documentation exposes enough control to implement and test a
+truthful adapter.
 
 ## Development
 
@@ -344,6 +514,10 @@ integration API.
 - [DeepSeek Harness adapter](docs/deepseek-harness-adapter.md)
 - [OpenCode adapter](docs/opencode-adapter.md)
 - [MiMo Code adapter](docs/mimocode-adapter.md)
+- [Hermes Agent adapter](docs/hermes-adapter.md)
+- [Kilo Code adapter](docs/kilo-adapter.md)
+- [Cline adapter](docs/cline-adapter.md)
+- [Kimi, Qwen, Copilot CLI, Kiro CLI, and Crush adapters](docs/command-hook-adapters.md)
 - [Capability and skip matrix](docs/compatibility.md)
 
 The repository root also carries Codex, Claude Code, and Cursor plugin

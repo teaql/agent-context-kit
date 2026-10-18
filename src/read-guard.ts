@@ -83,14 +83,26 @@ function containsShellPath(command: string, path: string): boolean {
 	return boundary.test(command.replaceAll("\\", "/"));
 }
 
-function pathInput(input: unknown): string | undefined {
+function pathInputs(input: unknown): string[] {
 	const candidate = record(input);
-	if (!candidate) return undefined;
+	if (!candidate) return [];
+	const paths: string[] = [];
 	for (const key of ["path", "filePath", "file_path", "directory"] as const) {
 		const value = candidate[key];
-		if (typeof value === "string") return value;
+		if (typeof value === "string") paths.push(value);
 	}
-	return undefined;
+	for (const key of ["paths", "files", "file_paths"] as const) {
+		const value = candidate[key];
+		if (!Array.isArray(value)) continue;
+		for (const item of value) {
+			if (typeof item === "string") paths.push(item);
+			else {
+				const nested = record(item);
+				if (typeof nested?.path === "string") paths.push(nested.path);
+			}
+		}
+	}
+	return paths;
 }
 
 function commandInput(input: unknown): string | undefined {
@@ -100,6 +112,12 @@ function commandInput(input: unknown): string | undefined {
 		const value = candidate[key];
 		if (typeof value === "string") return value;
 	}
+	for (const key of ["commands"] as const) {
+		const value = candidate[key];
+		if (Array.isArray(value) && value.every((item) => typeof item === "string")) {
+			return value.join("\n");
+		}
+	}
 	return undefined;
 }
 
@@ -107,17 +125,29 @@ function normalizedToolName(toolName: string): string {
 	switch (toolName.toLowerCase()) {
 		case "read_file":
 		case "readfile":
+		case "read_files":
+		case "read_many_files":
+		case "fs_read":
+		case "view":
 			return "read";
 		case "list":
 		case "list_directory":
+		case "list_files":
 			return "ls";
 		case "glob":
 			return "find";
 		case "search":
 		case "search_files":
+		case "grep_search":
+		case "rg":
 			return "grep";
 		case "shell":
+		case "terminal":
 		case "exec_command":
+		case "execute_bash":
+		case "run_commands":
+		case "run_shell_command":
+		case "powershell":
 			return "bash";
 		default:
 			return toolName.toLowerCase();
@@ -196,11 +226,9 @@ export class ReadGuard {
 		const toolName = normalizedToolName(request.toolName);
 		if (toolName === "bash") return this.evaluateBash({ ...request, toolName }, cwd);
 
-		const requested = pathInput(request.input) ?? ".";
-		const candidate = canonicalPath(resolve(cwd, requested));
-		const recursive =
-			toolName === "find" ||
-			(toolName === "grep" && isKnownDirectory(candidate));
+		const requestedPaths = pathInputs(request.input);
+		if (requestedPaths.length === 0) requestedPaths.push(".");
+		const recursiveTool = toolName === "find" || toolName === "grep";
 		if (
 			toolName !== "read" &&
 			toolName !== "grep" &&
@@ -210,22 +238,27 @@ export class ReadGuard {
 			return undefined;
 		}
 
-		const matched = this.protectedPaths.find(
-			(path) =>
-				containsPath(path.canonical, candidate) ||
-				(recursive && containsPath(candidate, path.canonical)),
-		);
-		if (!matched) return undefined;
+		for (const requested of requestedPaths) {
+			const candidate = canonicalPath(resolve(cwd, requested));
+			const recursive = recursiveTool && isKnownDirectory(candidate);
+			const matched = this.protectedPaths.find(
+				(path) =>
+					containsPath(path.canonical, candidate) ||
+					(recursive && containsPath(candidate, path.canonical)),
+			);
+			if (!matched) continue;
 
-		const relationship = containsPath(matched.canonical, candidate)
-			? "targets"
-			: "would recursively traverse";
-		return {
-			toolName: request.toolName,
-			requestedPath: requested,
-			protectedPath: matched.configured,
-			reason: `Read blocked by agent-context-kit: ${request.toolName} ${relationship} protected path "${matched.configured}". ${this.message} Do not retry this protected path.`,
-		};
+			const relationship = containsPath(matched.canonical, candidate)
+				? "targets"
+				: "would recursively traverse";
+			return {
+				toolName: request.toolName,
+				requestedPath: requested,
+				protectedPath: matched.configured,
+				reason: `Read blocked by agent-context-kit: ${request.toolName} ${relationship} protected path "${matched.configured}". ${this.message} Do not retry this protected path.`,
+			};
+		}
+		return undefined;
 	}
 
 	private evaluateBash(request: ReadGuardRequest, cwd: string): ReadGuardDecision | undefined {

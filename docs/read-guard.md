@@ -26,10 +26,11 @@ cp examples/read-guard/agent-context-kit.json .agent-context-kit.json
 ```
 
 Relative protected paths are resolved from `workspaceRoot`, which itself is
-resolved from the agent's starting directory. Pi, OpenCode, and MiMo Code load
-this workspace file. On a blocked call, each adapter returns the configured
-message to the model; Pi also records an `agent-context-kit-read-guard-v1`
-custom audit entry.
+resolved from the agent's starting directory. Pi, OpenCode, Kilo Code, Cline,
+MiMo Code, Hermes Agent, Kimi Code, Qwen Code, GitHub Copilot CLI, Kiro CLI,
+and Crush load this workspace file through their adapter or command hook. On a
+blocked call, each adapter returns the configured message to the model; Pi also records an
+`agent-context-kit-read-guard-v1` custom audit entry.
 
 The Pi extension also supports a policy stored elsewhere through an explicit
 path:
@@ -55,8 +56,10 @@ image.
 | `bash` | Controlled by `bashMode` |
 
 The cross-host matcher also recognizes common aliases such as `read_file`,
-`list_directory`, `glob`, `search_files`, `shell`, and `exec_command`, plus
-`filePath`, `file_path`, and `cmd` argument spellings.
+`read_files`, `read_many_files`, `fs_read`, `view`, `list_directory`, `glob`,
+`search_files`, `grep_search`, `rg`, `shell`, `execute_bash`, `run_commands`,
+`run_shell_command`, `powershell`, `terminal`, and `exec_command`. It accepts
+single-path fields plus `paths`, `files`, and `file_paths` arrays.
 
 Existing paths are resolved through symlinks before matching. Recursive
 workspace-wide `grep` and `find` calls are blocked when they would cross a

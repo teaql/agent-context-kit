@@ -9,4 +9,8 @@ export type {
 	ReadGuardRequest,
 } from "./read-guard.ts";
 export { createOpenCodePlugin, openCodePlugin } from "./adapters/opencode.ts";
+export { createKiloCodePlugin, kiloCodePlugin } from "./adapters/kilo.ts";
+export { clinePlugin, createClinePlugin } from "./adapters/cline.ts";
+export { handleCommandHook } from "./adapters/command-hook.ts";
+export type { CommandHookHost, CommandHookResult } from "./adapters/command-hook.ts";
 export { default } from "./adapters/opencode.ts";
