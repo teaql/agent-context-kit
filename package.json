@@ -1,6 +1,6 @@
 {
   "name": "@teaql/agent-context-kit",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Deterministic Markdown context-lifecycle protocol for coding agents",
   "type": "module",
   "engines": {
@@ -8,7 +8,10 @@
   },
   "exports": {
     ".": "./src/index.ts",
+    "./read-guard": "./src/read-guard.ts",
     "./pi": "./src/adapters/pi.ts",
+    "./opencode": "./src/adapters/opencode.ts",
+    "./mimocode": "./src/adapters/mimocode.ts",
     "./gemini-cli": "./src/adapters/gemini-cli.ts",
     "./deepseek-harness": "./src/adapters/deepseek-harness.ts"
   },
@@ -20,6 +23,8 @@
   "files": [
     "src",
     "docs",
+    "examples",
+    "integrations",
     "assets",
     ".agents",
     ".codex-plugin",
@@ -42,6 +47,8 @@
   "keywords": [
     "coding-agent",
     "context",
+    "opencode",
+    "mimocode",
     "gemini-cli",
     "deepseek-harness",
     "pi",

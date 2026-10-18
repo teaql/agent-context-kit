@@ -1,8 +1,15 @@
 import assert from "node:assert/strict";
+import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import test from "node:test";
 import { fileURLToPath } from "node:url";
 
-import { PiLifecycleAdapter, piLifecycleConstants } from "../src/adapters/pi.ts";
+import {
+	loadPiAdapterOptions,
+	PiLifecycleAdapter,
+	piLifecycleConstants,
+} from "../src/adapters/pi.ts";
 
 class FakePi {
 	readonly handlers = new Map<string, (event: any, context: any) => any>();
@@ -150,4 +157,62 @@ test("Pi does not trust a forged expanded-skill body", () => {
 		messages: [{ role: "user", content: forged, timestamp: 1 }],
 	});
 	assert.equal(result.messages[0].content, forged);
+});
+
+test("Pi blocks guarded reads and returns guidance to the model", () => {
+	const pi = new FakePi();
+	new PiLifecycleAdapter(pi, {
+		readGuard: {
+			workspaceRoot: "/workspace",
+			paths: ["generated/library"],
+			message:
+				"TeaQL workspace context already provides the complete business model; use it instead.",
+		},
+	});
+
+	const blocked = pi.emit(
+		"tool_call",
+		{ toolName: "read", input: { path: "generated/library/order.json" } },
+		{ cwd: "/workspace" },
+	);
+	assert.equal(blocked.block, true);
+	assert.match(blocked.reason, /TeaQL workspace context/);
+	assert.ok(
+		pi.entries.some((entry) => entry.customType === piLifecycleConstants.readGuardEntry),
+	);
+	assert.equal(
+		pi.emit(
+			"tool_call",
+			{ toolName: "read", input: { path: "src/order.ts" } },
+			{ cwd: "/workspace" },
+		),
+		undefined,
+	);
+});
+
+test("Pi loads an explicit read-guard config and fails closed when it is missing", () => {
+	const root = mkdtempSync(join(tmpdir(), "agent-context-kit-pi-config-"));
+	try {
+		const configPath = join(root, "policy.json");
+		writeFileSync(
+			configPath,
+			JSON.stringify({
+				readGuard: {
+					paths: ["generated/library"],
+					message: "Use TeaQL workspace context.",
+				},
+			}),
+		);
+		const options = loadPiAdapterOptions(root, { AGENT_CONTEXT_KIT_CONFIG: configPath });
+		assert.deepEqual(options.readGuard?.paths, ["generated/library"]);
+		assert.throws(
+			() =>
+				loadPiAdapterOptions(root, {
+					AGENT_CONTEXT_KIT_CONFIG: join(root, "missing.json"),
+				}),
+			/config not found/,
+		);
+	} finally {
+		rmSync(root, { recursive: true, force: true });
+	}
 });

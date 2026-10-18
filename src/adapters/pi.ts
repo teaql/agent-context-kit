@@ -1,5 +1,7 @@
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
+import { resolve } from "node:path";
 
+import { ReadGuard, parseReadGuardConfig, type ReadGuardConfig } from "../read-guard.ts";
 import { LifecycleSession, getMessageText } from "../session.ts";
 import type {
 	AuditEvent,
@@ -12,9 +14,12 @@ const AUDIT_ENTRY = "agent-context-kit-audit-v1";
 const STATE_ENTRY = "agent-context-kit-state-v1";
 const CONTROL_MESSAGE_TYPE = "agent-context-kit-control";
 const ACTIVE_MESSAGE_TYPE = "agent-context-kit-active-v1";
+const READ_GUARD_ENTRY = "agent-context-kit-read-guard-v1";
 const BLOCK_ID = /^[a-z0-9_-]+$/;
+const DEFAULT_CONFIG_FILE = ".agent-context-kit.json";
 
 interface PiContext {
+	cwd?: string;
 	ui?: {
 		notify?: (message: string, type?: "info" | "warning" | "error") => void;
 		setStatus?: (key: string, text: string | undefined) => void;
@@ -62,6 +67,38 @@ export interface PiAdapterOptions {
 		index: number,
 	) => ControlSource | undefined;
 	clock?: () => Date;
+	readGuard?: ReadGuardConfig;
+}
+
+interface PiConfigurationFile {
+	readGuard?: unknown;
+}
+
+export function loadPiAdapterOptions(
+	cwd = process.cwd(),
+	environment: NodeJS.ProcessEnv = process.env,
+): PiAdapterOptions {
+	const explicitPath = environment.AGENT_CONTEXT_KIT_CONFIG;
+	const configPath = resolve(cwd, explicitPath ?? DEFAULT_CONFIG_FILE);
+	if (!existsSync(configPath)) {
+		if (explicitPath) throw new Error(`Agent Context Kit config not found: ${configPath}`);
+		return {};
+	}
+
+	let parsed: unknown;
+	try {
+		parsed = JSON.parse(readFileSync(configPath, "utf8"));
+	} catch (error) {
+		throw new Error(
+			`Invalid Agent Context Kit config at ${configPath}: ${error instanceof Error ? error.message : String(error)}`,
+		);
+	}
+	if (typeof parsed !== "object" || parsed === null || Array.isArray(parsed)) {
+		throw new Error(`Agent Context Kit config must be a JSON object: ${configPath}`);
+	}
+	const config = parsed as PiConfigurationFile;
+	if (config.readGuard === undefined) return {};
+	return { readGuard: parseReadGuardConfig(config.readGuard, `${configPath}:readGuard`) };
 }
 
 function xmlDecode(value: string): string {
@@ -160,6 +197,7 @@ function rewriteExpandedSkills(
 export class PiLifecycleAdapter {
 	private readonly pi: PiExtensionApi;
 	private readonly options: PiAdapterOptions;
+	private readonly readGuard: ReadGuard | undefined;
 	private session: LifecycleSession;
 	private readonly promptRewrites = new Map<string, string>();
 	private readonly pendingSkillNames = new Set<string>();
@@ -168,6 +206,7 @@ export class PiLifecycleAdapter {
 	constructor(pi: PiExtensionApi, options: PiAdapterOptions = {}) {
 		this.pi = pi;
 		this.options = options;
+		this.readGuard = options.readGuard ? new ReadGuard(options.readGuard) : undefined;
 		this.session = this.createSession();
 		this.register();
 	}
@@ -214,6 +253,24 @@ export class PiLifecycleAdapter {
 			if (typeof event.text !== "string") return;
 			const invocation = /^\/skill:([a-z0-9-]+)(?:\s|$)/.exec(event.text);
 			if (invocation?.[1]) this.pendingSkillNames.add(invocation[1]);
+		});
+
+		this.pi.on("tool_call", (event: { toolName: string; input: unknown }, context) => {
+			const decision = this.readGuard?.evaluate({
+				toolName: event.toolName,
+				input: event.input,
+				...(context.cwd === undefined ? {} : { cwd: context.cwd }),
+			});
+			if (!decision) return undefined;
+			this.pi.appendEntry?.(READ_GUARD_ENTRY, {
+				...decision,
+				timestamp: new Date().toISOString(),
+			});
+			context.ui?.notify?.(
+				`Blocked ${decision.toolName} access to ${decision.protectedPath ?? "protected paths"}`,
+				"warning",
+			);
+			return { block: true, reason: decision.reason };
 		});
 
 		this.pi.on("before_agent_start", (rawEvent) => {
@@ -286,7 +343,7 @@ export class PiLifecycleAdapter {
 }
 
 export default function agentContextKitPiExtension(pi: PiExtensionApi): void {
-	new PiLifecycleAdapter(pi);
+	new PiLifecycleAdapter(pi, loadPiAdapterOptions());
 }
 
 export const piLifecycleConstants = {
@@ -294,4 +351,5 @@ export const piLifecycleConstants = {
 	stateEntry: STATE_ENTRY,
 	controlMessageType: CONTROL_MESSAGE_TYPE,
 	activeMessageType: ACTIVE_MESSAGE_TYPE,
+	readGuardEntry: READ_GUARD_ENTRY,
 } as const;

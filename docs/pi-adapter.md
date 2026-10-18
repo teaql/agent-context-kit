@@ -67,3 +67,16 @@ The last `persistent_transcript` record independently checks that the original
 ephemeral tool result remains stored and the tombstone was never persisted.
 The generated trace lives at `.artifacts/pi-context-trace.jsonl`; it is ignored
 by Git because it is a local test artifact.
+
+## Protected read paths
+
+The same Pi extension can block built-in read-oriented tools before execution
+and return a configured redirect to the model. This is useful when TeaQL
+workspace context already contains the business meaning of generated
+libraries. Configure `.agent-context-kit.json` or set
+`AGENT_CONTEXT_KIT_CONFIG` to a policy outside the writable workspace. See the
+[read-guard guide](read-guard.md).
+
+This hook supplies contextual feedback; it is not a complete operating-system
+permission boundary. Use OpenShell or another sandbox to exclude protected
+paths from arbitrary processes and custom tools.

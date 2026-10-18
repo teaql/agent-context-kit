@@ -27,12 +27,19 @@ transcript and Markdown sources unchanged.
     <td align="center"><a href="#cursor"><img src="assets/coding-agents/cursor.svg" width="56" height="56" alt="Cursor"><br>Cursor</a></td>
     <td align="center"><a href="#gemini-cli"><img src="assets/coding-agents/gemini-cli.svg" width="56" height="56" alt="Gemini CLI"><br>Gemini CLI</a></td>
   </tr>
+  <tr>
+    <td align="center"><a href="#pi"><img src="assets/coding-agents/pi.svg" width="56" height="56" alt="Pi"><br>Pi</a></td>
+    <td align="center"><a href="#opencode"><img src="assets/coding-agents/opencode.svg" width="56" height="56" alt="OpenCode"><br>OpenCode</a></td>
+    <td align="center"><a href="#mimo-code"><img src="assets/coding-agents/mimocode.svg" width="56" height="56" alt="MiMo Code"><br>MiMo Code</a></td>
+    <td align="center"><a href="#deepseek-harness"><img src="assets/coding-agents/deepseek-harness.svg" width="56" height="56" alt="DeepSeek Harness"><br>DeepSeek Harness</a></td>
+  </tr>
 </table>
 
 The coding-agent tiles match the companion
-[TeaQL Agent Kit](https://github.com/teaql/teaql-agent-kit). Pi and DeepSeek
-Harness are also supported below; the icon set is intentionally limited to
-the verified, licensed assets already used by that project.
+[TeaQL Agent Kit](https://github.com/teaql/teaql-agent-kit). OpenCode, MiMo
+Code, and DeepSeek use the same licensed Lobe Icons source and tile treatment;
+Pi uses the mascot geometry and color documented by its MIT-licensed project.
+Every agent listed as supported below now has a tile.
 
 ## Supported agents
 
@@ -40,14 +47,14 @@ Support is split by what each host can enforce at the model-request boundary:
 
 | Support tier | Agents | What is supported |
 | --- | --- | --- |
-| Full V1 runtime | **Pi** | Persistent blocks, trusted discard, and consume-once ephemeral messages |
-| Runtime with host limits | **Gemini CLI**, **DeepSeek Harness** | Gemini CLI supports stable text messages; DeepSeek Harness uses durable projections and requires its trusted source on resume |
+| Full V1 runtime | **Pi**, **OpenCode** | Persistent blocks, trusted discard, consume-once ephemeral messages, and protected-read feedback |
+| Runtime with host limits | **Gemini CLI**, **DeepSeek Harness**, **MiMo Code** | Gemini CLI is text-only; DeepSeek Harness uses durable projections; MiMo Code relies on officially typed but experimental message-transform hooks |
 | Installable protocol plugin | **Codex**, **Claude Code**, **Cursor** | Protocol authoring and integration guidance; full runtime enforcement is not claimed |
 | Evaluated, not currently supported | Antigravity, WorkBuddy | No documented request-history rewrite API, so no package is published |
 
-In short, runtime adapters are available for **Pi**, **Gemini CLI**, and
-**DeepSeek Harness**. Installable guidance plugins are available for
-**Codex**, **Claude Code**, and **Cursor**. See the
+In short, runtime adapters are available for **Pi**, **OpenCode**, **MiMo
+Code**, **Gemini CLI**, and **DeepSeek Harness**. Installable guidance plugins
+are available for **Codex**, **Claude Code**, and **Cursor**. See the
 [compatibility matrix](docs/compatibility.md) for the exact host constraints.
 
 ## Status
@@ -58,7 +65,11 @@ The implementation includes:
 - a strict parser with diagnostics;
 - session block state and audit events;
 - consume-once ephemeral message handling;
+- a configurable cross-host read guard that redirects protected
+  generated-library reads to TeaQL workspace context;
 - a Pi extension adapter;
+- an OpenCode V1/V2 package plugin with request-local context and read guards;
+- a MiMo Code file plugin with request-local context and cancellable read guards;
 - a Gemini CLI extension adapter for the stable text-message hook API;
 - a DeepSeek Harness function plugin with durable ephemeral projections;
 - installable Codex, Claude Code, and Cursor protocol-guidance plugins;
@@ -70,8 +81,8 @@ The implementation includes:
 ## Installation
 
 The installable package does not imply identical runtime capabilities. Check
-the support tiers above before relying on consume-once behavior outside Pi,
-Gemini CLI, or DeepSeek Harness.
+the support tiers above before relying on consume-once behavior on a host with
+documented limits.
 
 ### Pi
 
@@ -137,6 +148,27 @@ pi remove git:github.com/teaql/agent-context-kit
 Pi packages execute with the current user's permissions. Review an extension's
 source before installing it.
 
+#### Protect generated libraries from reads
+
+Add `.agent-context-kit.json` to the workspace when TeaQL already supplies the
+business context and Pi should not scan generated libraries:
+
+```json
+{
+  "readGuard": {
+    "paths": ["generated/library"],
+    "message": "This is generated content. TeaQL workspace context already provides the complete business model; use that context instead.",
+    "bashMode": "literal"
+  }
+}
+```
+
+The Pi extension blocks matching `read`, `ls`, `grep`, and `find` calls and
+returns the configured guidance to the model. Shell handling is configurable;
+OpenShell can provide the non-bypassable filesystem boundary. See the
+[read-guard guide](docs/read-guard.md) for configuration, limitations, and an
+OpenShell allowlist example.
+
 ### Gemini CLI
 
 Install directly from GitHub, then restart Gemini CLI:
@@ -167,6 +199,41 @@ Start Harness with that overlay using the command appropriate to your Harness
 checkout or deployment. Put trusted declarations in `.agent-context-kit.md`
 at the session working directory. See the
 [DeepSeek Harness adapter guide](docs/deepseek-harness-adapter.md).
+
+### OpenCode
+
+OpenCode V2 can install the package plugin directly from GitHub:
+
+```bash
+opencode plugin add github:teaql/agent-context-kit
+```
+
+For project-scoped installation, add `"github:teaql/agent-context-kit"` to the
+`plugins` array in `opencode.jsonc`. Put trusted declarations and discards in
+`.agent-context-kit.md`; the plugin removes consumed ephemeral history only in
+the outgoing request. A workspace `.agent-context-kit.json` also enables the
+protected-read redirect. OpenCode V2 is preferred; the package includes the
+officially documented V1 compatibility entry point for OpenCode 1.18.29 or
+later. See the [OpenCode adapter guide](docs/opencode-adapter.md).
+
+### MiMo Code
+
+MiMo Code 0.1.15 or later is required. Install this package under MiMo Code's
+project configuration directory, then copy the one-line file-plugin entry:
+
+```bash
+mkdir -p .mimocode/plugins
+npm install --prefix .mimocode github:teaql/agent-context-kit
+cp .mimocode/node_modules/@teaql/agent-context-kit/integrations/mimocode/agent-context-kit.ts \
+  .mimocode/plugins/agent-context-kit.ts
+```
+
+Restart `mimo`, and keep trusted lifecycle declarations in
+`.agent-context-kit.md`. MiMo's current source scans `.mimocode/plugins/`, even
+though an older public plugin page still names the upstream OpenCode path. The
+adapter is therefore source-verified and marked experimental until MiMo's
+public plugin documentation catches up. See the
+[MiMo Code adapter guide](docs/mimocode-adapter.md).
 
 ### Codex
 
@@ -275,6 +342,8 @@ integration API.
 
 - [Gemini CLI adapter](docs/gemini-cli-adapter.md)
 - [DeepSeek Harness adapter](docs/deepseek-harness-adapter.md)
+- [OpenCode adapter](docs/opencode-adapter.md)
+- [MiMo Code adapter](docs/mimocode-adapter.md)
 - [Capability and skip matrix](docs/compatibility.md)
 
 The repository root also carries Codex, Claude Code, and Cursor plugin

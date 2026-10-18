@@ -6,6 +6,8 @@ are deliberately separate claims.
 | Agent | Packaging documented | Request-local history rewrite | Project status |
 | --- | --- | --- | --- |
 | Pi | Extension package | Yes, `context` transform | Full V1 adapter |
+| OpenCode | V2 package plugin; V1 compatibility entry | Yes, request-local `context` hook in V2 and message transform in V1 | Full V1 lifecycle adapter; read guard throws before tool execution |
+| MiMo Code | Project file plugin under `.mimocode/plugins/` | Yes, experimental message/system transforms | Source-verified experimental adapter; read guard uses the typed cancellation result |
 | DeepSeek Harness | Cordis function plugin | Yes, durable message projections plus prompt sections | V1 adapter; trusted source must remain available when resuming |
 | Gemini CLI | Extension with `hooks/hooks.json` | Text-only `BeforeModel` request view | Supported for text messages; non-text tool payloads are outside the stable hook API |
 | Codex | Agent Plugin | No; `UserPromptSubmit` only adds context | Installable protocol skill; runtime enforcement not claimed |
@@ -15,6 +17,21 @@ are deliberately separate claims.
 | WorkBuddy | Skills, experts, connectors | No documented per-model request rewrite hook found | Skipped |
 
 ## Runtime limits and skipped hosts
+
+- OpenCode V2 documents a per-session `context` hook that mutates messages and
+  system instructions only for the outgoing model request. Its tool hook can
+  reject a protected read before execution. V1 compatibility uses the older
+  message/system transform hooks and requires OpenCode 1.18.29 or later for the
+  package object entry point. See [OpenCode V2 plugins](https://dev.opencode.ai/v2/docs/build/plugins/)
+  and [the V1 migration table](https://dev.opencode.ai/v2/docs/build/plugins/migrate-v1).
+- MiMo Code's maintained `@mimo-ai/plugin` source types expose message/system
+  transforms and a cancellable `tool.execute.before` result. The project file
+  loader scans `.mimocode/plugins/`, but the public plugin guide still contains
+  inherited `.opencode` paths. Support is marked experimental until the
+  documentation and API stability catch up. See the
+  [plugin type source](https://github.com/XiaomiMiMo/MiMo-Code/blob/main/packages/plugin/src/index.ts),
+  [current config reference](https://github.com/XiaomiMiMo/MiMo-Code/blob/main/packages/opencode/src/skill/builtin/.bundle/mimocode-docs/reference/config.md),
+  and [path documentation issue](https://github.com/XiaomiMiMo/MiMo-Code/issues/1151).
 
 - Codex documents Agent Plugin packaging and lifecycle hooks, but
   `UserPromptSubmit` adds context rather than replacing the prompt or history,

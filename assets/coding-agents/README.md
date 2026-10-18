@@ -8,3 +8,9 @@ The marks originate from
 [Lobe Icons](https://github.com/lobehub/lobe-icons),
 `@lobehub/icons-static-svg@1.95.1`, under the bundled MIT license. Each mark is
 centered on an unchanged white rounded tile for light and dark GitHub themes.
+
+The OpenCode, Xiaomi MiMo, and DeepSeek marks were added from
+`@lobehub/icons-static-svg@1.90.0` using the same tile treatment. The Pi tile
+derives its geometry and `#50b4e6` color from the mascot in the
+[MIT-licensed Pi project](https://github.com/earendil-works/pi); see
+`PI-LICENSE`.
