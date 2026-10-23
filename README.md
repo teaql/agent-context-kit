@@ -1,5 +1,12 @@
 # agent-context-kit
 
+> **项目已迁移，停止独立维护。**
+>
+> 本项目已合并到 [TeaQL Agent Kit](https://github.com/teaql/teaql-agent-kit)，
+> 代码位于 [`packages/agent-context-kit`](https://github.com/teaql/teaql-agent-kit/tree/main/packages/agent-context-kit)。
+> 后续开发、问题反馈和文档更新请移步新仓库；包名仍为 `@teaql/agent-context-kit`。
+> 本仓库仅保留历史参考，以下说明属于迁移前的文档。
+
 `agent-context-kit` is a small, deterministic context-lifecycle protocol for
 coding agents. Markdown HTML comments declare content that is visible for one
 model response or remains active until a trusted workflow explicitly discards
@@ -113,7 +120,13 @@ documented limits.
 
 ### Pi
 
-Pi 0.85 or later and Node.js 22.19 or later are required. Install the package
+For the dedicated `.agent-no-read.md` harness, see the
+[context exclusion guide](docs/pi-context-policy.md). This is a separate SDK
+entry point; normal extension installation below enables the lifecycle adapter.
+The [marker-maintenance guide](docs/context-marker-maintenance.md) covers skill
+scripts, restoring markers after generation and the runnable end-to-end example.
+
+Pi 1.4 or later and Node.js 22.19 or later are required. Install the package
 for your user account directly from GitHub:
 
 ```bash
